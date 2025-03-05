@@ -21,26 +21,34 @@ const keys = {
   ArrowDown: false
 }
 
-const playerImages = {
-  normal: new Image(),
-  leftFoot: new Image(),
-  rightFoot: new Image(),
-  leftNormal: new Image(),
-  leftLeftFoot: new Image(),
-  leftRightFoot: new Image(),
-  upNormal: new Image(),
-  upLeftFoot: new Image(),
-  upRightFoot: new Image(),
+const directions = ['down', 'left', 'up'];
+const frames = ['0', '1', '2', '3'];
+const playerImages = {};
+
+directions.forEach((dir) => {
+  playerImages[dir] = {};
+  frames.forEach((frame) => {
+    playerImages[dir][frame] = new Image();
+
+    if (frame === '0' || frame === '2') {
+      playerImages[dir][frame].src = `assets/skins/p-1/${dir}/0.png`;
+    } else {
+      playerImages[dir][frame].src = `assets/skins/p-1/${dir}/${frame}.png`;
+    }
+  });
+});
+
+function getPlayerImage(player, animationFrame) {
+  if (player.isStunned) {
+    return playerImages['down']['0'];
+  } else if (player.isInvincible) {
+    return Date.now() % 200 < 100 ? playerImages['down']['0'] : playerImages['down']['0'];
+  }
+
+  let direction = player.direction || 'down';
+  let frame = animationFrame % 2 === 0 ? '0' : (animationFrame % 4 === 1 ? '1' : '2');
+  return playerImages[direction]?.[frame] || playerImages['down']['0'];
 }
-playerImages.normal.src = 'assets/front/0.png'
-playerImages.leftFoot.src = 'assets/front/1.png'
-playerImages.rightFoot.src = 'assets/front/2.png'
-playerImages.leftNormal.src = 'assets/cote/0.png'
-playerImages.leftLeftFoot.src = 'assets/cote/1.png'
-playerImages.leftRightFoot.src = 'assets/cote/2.png'
-playerImages.upNormal.src = 'assets/back/0.png'
-playerImages.upLeftFoot.src = 'assets/back/1.png'
-playerImages.upRightFoot.src = 'assets/back/2.png'
 
 let animationFrame = 0
 
@@ -85,16 +93,16 @@ socket.on('gameState', (state) => {
 //restart
 function resetInterface() {
   canvas.style.display = 'none'
-  
+
   loginScreen.style.display = 'block'
   playerNameInput.style.display = 'block'
   joinBtn.style.display = 'block'
   startBtn.style.display = 'none'
-  
+
   playerNameInput.value = ''
-  
+
   playersCountDiv.textContent = 'Joueurs connectés: 0/4'
-  
+
   players = []
   gameState = null
   myPlayer = null
@@ -197,7 +205,7 @@ function render() {
 
   // player
   players.forEach(player => {
-    let playerImage;
+    let playerImage = getPlayerImage(player, animationFrame);
     let playerDirection = player.direction; // On s'assure qu'une direction existe
 
     if (player.isStunned) {
@@ -205,32 +213,13 @@ function render() {
     } else if (player.isInvincible) {
       playerImage = Date.now() % 200 < 100 ? playerImages.normal : playerImages.normal;
     } else {
-      if (playerDirection === 'left') {
-        playerImage = animationFrame % 2 === 0 ? playerImages.leftNormal :
-            (animationFrame % 4 === 1 ? playerImages.leftLeftFoot : playerImages.leftRightFoot);
-      } else if (playerDirection === 'right') {
-        playerImage = animationFrame % 2 === 0 ? playerImages.leftNormal :
-            (animationFrame % 4 === 1 ? playerImages.leftLeftFoot : playerImages.leftRightFoot);
-
+      if (player.direction === 'right') {
         ctx.save();
         ctx.scale(-1, 1);
         ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40);
         ctx.restore();
-        return;
-      } else if (playerDirection === 'up') {
-        playerImage = animationFrame % 2 === 0 ? playerImages.upNormal :
-            (animationFrame % 4 === 1 ? playerImages.upLeftFoot : playerImages.upRightFoot);
-      } else if (playerDirection === 'down') {
-        if (animationFrame === 0 || animationFrame === 2) {
-          playerImage = playerImages.normal;
-        } else if (animationFrame === 1) {
-          playerImage = playerImages.leftFoot;
-        } else {
-          playerImage = playerImages.rightFoot;
-        }
       } else {
-        playerImage = animationFrame % 2 === 0 ? playerImages.normal :
-            (animationFrame % 4 === 1 ? playerImages.leftFoot : playerImages.rightFoot);
+        ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40);
       }
     }
 
