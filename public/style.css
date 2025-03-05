@@ -6,6 +6,8 @@ body {
     min-height: 100vh;
     background: #1a1a1a;
     font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
 }
 
 #login-screen {
@@ -44,3 +46,7 @@ input, button {
     margin-top: 10px;
     color: white;
 } 
+
+h2 {
+    color: white;
+}
