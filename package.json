@@ -1,5 +1,5 @@
 {
-  "name": "lava-runner-multiplayer",
+  "name": "escape-monster",
   "version": "1.0.0",
   "description": "Jeu multijoueur de course contre la lave",
   "main": "server.js",
