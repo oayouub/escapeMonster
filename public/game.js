@@ -21,6 +21,29 @@ const keys = {
   ArrowDown: false
 }
 
+const playerImages = {
+  normal: new Image(),
+  leftFoot: new Image(),
+  rightFoot: new Image(),
+  leftNormal: new Image(),
+  leftLeftFoot: new Image(),
+  leftRightFoot: new Image(),
+  upNormal: new Image(),
+  upLeftFoot: new Image(),
+  upRightFoot: new Image(),
+}
+playerImages.normal.src = 'assets/front/0.png'
+playerImages.leftFoot.src = 'assets/front/1.png'
+playerImages.rightFoot.src = 'assets/front/2.png'
+playerImages.leftNormal.src = 'assets/cote/0.png'
+playerImages.leftLeftFoot.src = 'assets/cote/1.png'
+playerImages.leftRightFoot.src = 'assets/cote/2.png'
+playerImages.upNormal.src = 'assets/back/0.png'
+playerImages.upLeftFoot.src = 'assets/back/1.png'
+playerImages.upRightFoot.src = 'assets/back/2.png'
+
+let animationFrame = 0
+
 // join
 joinBtn.addEventListener('click', () => {
   const playerName = playerNameInput.value.trim()
@@ -47,9 +70,13 @@ socket.on('gameStarted', () => {
 })
 
 socket.on('players', (updatedPlayers) => {
-  players = updatedPlayers
-  myPlayer = players.find(p => p.id === socket.id)
-})
+  players = updatedPlayers.map(player => ({
+    ...player,
+    direction: player.direction
+  }));
+  myPlayer = players.find(p => p.id === socket.id);
+});
+
 
 socket.on('gameState', (state) => {
   gameState = state
@@ -111,19 +138,45 @@ document.addEventListener('keyup', (e) => {
 
 function gameLoop() {
   if (myPlayer && !myPlayer.isStunned) {
-    if (keys.ArrowLeft) myPlayer.x -= 5
-    if (keys.ArrowRight) myPlayer.x += 5
-    if (keys.ArrowUp) myPlayer.y -= 5
-    if (keys.ArrowDown) myPlayer.y += 5
+    let newDirection = null
 
-    myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x))
-    myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y))
+    if (keys.ArrowLeft) {
+      myPlayer.x -= 5;
+      newDirection = 'left';
+    }
+    if (keys.ArrowRight) {
+      myPlayer.x += 5;
+      newDirection = 'right';
+    }
+    if (keys.ArrowUp) {
+      myPlayer.y -= 5;
+      newDirection = 'up';
+    }
+    if (keys.ArrowDown) {
+      myPlayer.y += 5;
+      newDirection = 'down';
+    }
 
-    socket.emit('move', { x: myPlayer.x, y: myPlayer.y })
+    if (!keys.ArrowLeft && !keys.ArrowRight && !keys.ArrowUp && !keys.ArrowDown) {
+      newDirection = myPlayer.direction; // Ne change pas la direction
+    }
+
+    myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x));
+    myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y));
+
+    // Seulement envoyer si la direction change
+    if (newDirection !== myPlayer.direction) {
+      myPlayer.direction = newDirection;
+      socket.emit('move', {x: myPlayer.x, y: myPlayer.y, direction: newDirection});
+    } else {
+      console.log('default', myPlayer.direction, newDirection)
+    }
+
+    animationFrame = (animationFrame + 1) % 4;
   }
 
-  render()
-  requestAnimationFrame(gameLoop)
+  render();
+  requestAnimationFrame(gameLoop);
 }
 
 function render() {
@@ -144,30 +197,54 @@ function render() {
 
   // player
   players.forEach(player => {
-    let playerColor
+    let playerImage;
+    let playerDirection = player.direction; // On s'assure qu'une direction existe
+
     if (player.isStunned) {
-      playerColor = '#888888'
+      playerImage = playerImages.normal;
     } else if (player.isInvincible) {
-      playerColor = Date.now() % 200 < 100 ? '#ffff00' : '#ff9900'
+      playerImage = Date.now() % 200 < 100 ? playerImages.normal : playerImages.normal;
     } else {
-      playerColor = player.id === socket.id ? '#00ff00' : '#ff0000'
+      if (playerDirection === 'left') {
+        playerImage = animationFrame % 2 === 0 ? playerImages.leftNormal :
+            (animationFrame % 4 === 1 ? playerImages.leftLeftFoot : playerImages.leftRightFoot);
+      } else if (playerDirection === 'right') {
+        playerImage = animationFrame % 2 === 0 ? playerImages.leftNormal :
+            (animationFrame % 4 === 1 ? playerImages.leftLeftFoot : playerImages.leftRightFoot);
+
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40);
+        ctx.restore();
+        return;
+      } else if (playerDirection === 'up') {
+        playerImage = animationFrame % 2 === 0 ? playerImages.upNormal :
+            (animationFrame % 4 === 1 ? playerImages.upLeftFoot : playerImages.upRightFoot);
+      } else if (playerDirection === 'down') {
+        if (animationFrame === 0 || animationFrame === 2) {
+          playerImage = playerImages.normal;
+        } else if (animationFrame === 1) {
+          playerImage = playerImages.leftFoot;
+        } else {
+          playerImage = playerImages.rightFoot;
+        }
+      } else {
+        playerImage = animationFrame % 2 === 0 ? playerImages.normal :
+            (animationFrame % 4 === 1 ? playerImages.leftFoot : playerImages.rightFoot);
+      }
     }
-    
-    ctx.fillStyle = playerColor
-    ctx.beginPath()
-    ctx.arc(player.x, player.y, 20, 0, Math.PI * 2)
-    ctx.fill();
-    
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'center'
-    ctx.fillText(player.name, player.x, player.y - 30)
-    
+
+    ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.name, player.x, player.y - 30);
+
     if (player.isStunned) {
-      ctx.fillText('STUN!', player.x, player.y - 45)
+      ctx.fillText('STUN!', player.x, player.y - 45);
     } else if (player.isInvincible) {
-      ctx.fillText('INVINCIBLE!', player.x, player.y - 45)
+      ctx.fillText('INVINCIBLE!', player.x, player.y - 45);
     }
-  })
+  });
 }
 
 gameLoop()
