@@ -87,6 +87,7 @@ socket.on('playersCount', (count) => {
 socket.on('gameStarted', () => {
   loginScreen.style.display = 'none'
   canvas.style.display = 'block'
+  document.getElementById('game-title').style.display = 'none'
 })
 
 socket.on('players', (updatedPlayers) => {
@@ -110,16 +111,14 @@ socket.on('gameState', (state) => {
 //restart
 function resetInterface() {
   canvas.style.display = 'none'
-
   loginScreen.style.display = 'block'
   playerNameInput.style.display = 'block'
   joinBtn.style.display = 'block'
   startBtn.style.display = 'none'
-
+  document.getElementById('game-title').style.display = 'block'
+  
   playerNameInput.value = ''
-
   playersCountDiv.textContent = 'Joueurs connectés: 0/4'
-
   players = []
   gameState = null
   myPlayer = null

@@ -8,12 +8,15 @@ body {
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
+    background-image: url('assets/fondlave.webp');
+    background-position: bottom;
+    position: relative;
 }
 
 #login-screen {
     text-align: center;
     padding: 20px;
-    background: #333;
+    background-color: #1a1a1a;
     border-radius: 10px;
 }
 
@@ -24,7 +27,7 @@ input, button {
 }
 
 #gameCanvas {
-    border: 2px solid #fff;
+    border: 2px solid #1a1a1a;
 }
 
 #start-btn {
@@ -47,6 +50,31 @@ input, button {
     color: white;
 } 
 
+@font-face {
+    font-family: 'MaPolice';
+    src: url('fonts/monsterama.ttf') format('truetype');
+}
+
+#game-title {
+    display:flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #1a1a1a;
+    margin: 0;
+    position: absolute;
+    top: 50px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
 h2 {
+    font-family: 'MaPolice', Arial, sans-serif;
+    font-size: 6rem;
+    color: #4CAF50;
+    margin: 0;
+}
+h3 {
     color: white;
+    font-size: 5rem;
+    margin: 0;
 }
