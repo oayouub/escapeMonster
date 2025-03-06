@@ -14,8 +14,8 @@ let gameState = {
   obstacleSpeed: 2 
 }
 
-const STUN_DURATION = 1000
-const INVINCIBLE_DURATION = 1000
+const STUN_DURATION = 1500
+const INVINCIBLE_DURATION = 500
 
 io.on('connection', (socket) => {
   console.log('Nouveau joueur connecté')

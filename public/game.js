@@ -12,6 +12,10 @@ const soundToggle = document.getElementById('soundToggle')
 const soundOnIcon = soundToggle.querySelector('.sound-on')
 const soundOffIcon = soundToggle.querySelector('.sound-off')
 
+const winModal = document.getElementById('win-modal');
+const winnerText = document.getElementById('winner-text');
+const returnLobbyBtn = document.getElementById('return-lobby');
+
 backgroundMusic.volume = 0.5;
 soundToggle.addEventListener('click', () => {
     if (backgroundMusic.paused) {
@@ -134,31 +138,34 @@ socket.on('gameState', (state) => {
 
 //restart
 function resetInterface() {
-  canvas.style.display = 'none'
-  loginScreen.style.display = 'block'
-  playerNameInput.style.display = 'block'
-  joinBtn.style.display = 'block'
-  startBtn.style.display = 'none'
-  document.getElementById('game-title').style.display = 'block'
+  winModal.style.display = 'none';
+  canvas.style.display = 'none';
+  loginScreen.style.display = 'block';
+  playerNameInput.style.display = 'block';
+  joinBtn.style.display = 'block';
+  startBtn.style.display = 'none';
+  document.getElementById('game-title').style.display = 'block';
   
-  playerNameInput.value = ''
-  playersCountDiv.textContent = 'Joueurs connectés: 0/4'
-  players = []
-  gameState = null
-  myPlayer = null
+  playerNameInput.value = '';
+  playersCountDiv.textContent = 'CONNECTED PLAYERS: 0/4';
+  players = [];
+  gameState = null;
+  myPlayer = null;
 }
 
 socket.on('eliminated', () => {
-  alert('Vous avez été éliminé !')
+  // Ne rien faire, le joueur continue de regarder la partie
 })
 
 socket.on('gameOver', (winner) => {
-  alert(`${winner.name} a gagné la partie !`)
-  resetInterface()
+  winModal.style.display = 'flex';
+  winnerText.textContent = `${winner.name} WINS!`;
 })
 
 socket.on('gameReset', () => {
-  resetInterface()
+  if (winModal.style.display !== 'flex') {
+    resetInterface();
+  }
 })
 
 // stun
@@ -181,6 +188,12 @@ socket.on('gameConstants', (constants) => {
   STUN_DURATION = constants.STUN_DURATION
   INVINCIBLE_DURATION = constants.INVINCIBLE_DURATION
 })
+
+// Ajouter l'événement pour le bouton de retour
+returnLobbyBtn.addEventListener('click', () => {
+  resetInterface();
+  socket.emit('returnToLobby');
+});
 
 document.addEventListener('keydown', (e) => {
   if (keys.hasOwnProperty(e.key)) {

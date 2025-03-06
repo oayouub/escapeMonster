@@ -27,6 +27,7 @@ body {
     font-family: 'MaPolice2', Arial, sans-serif;
     display: flex;
     flex-direction: column;
+    white-space: nowrap;
 }
 
 input, button {
@@ -75,6 +76,7 @@ input, button {
     top: 50px;
     padding: 10px;
     border-radius: 10px;
+    white-space: nowrap;
 }
 
 h2 {
@@ -125,4 +127,60 @@ h3 {
 
 .sound-button:hover {
     background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Ajouter les styles pour la modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #4CAF50;
+    animation: modalAppear 0.3s ease-out;
+}
+
+.modal-content h2 {
+    font-family: 'MaPolice', Arial, sans-serif;
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #4CAF50;
+}
+
+#return-lobby {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'MaPolice2', Arial, sans-serif;
+}
+
+#return-lobby:hover {
+    background-color: #45a049;
+}
+
+@keyframes modalAppear {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

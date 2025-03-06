@@ -25,6 +25,12 @@
         <div id="players-count"></div>
     </div>
     <canvas id="gameCanvas" style="display: none;"></canvas>
+    <div id="win-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="winner-text"></h2>
+            <button id="return-lobby">RETURN TO LOBBY</button>
+        </div>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game.js"></script>
 </body>
