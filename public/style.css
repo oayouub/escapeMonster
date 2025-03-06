@@ -78,3 +78,41 @@ h3 {
     font-size: 5rem;
     margin: 0;
 }
+#game-title p {
+    position: absolute;
+    bottom: -10px; /* Ajustez selon le rendu souhaité */
+    right: 10px;
+    transform: rotate(-10deg); /* Inclinaison */
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: pulse 1.5s infinite alternate ease-in-out;
+    color: yellow;
+}
+
+@keyframes pulse {
+    0% {
+        transform: rotate(-10deg) scale(1);
+    }
+    100% {
+        transform: rotate(-10deg) scale(1.2);
+    }
+}
+
+.sound-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+    color: white;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+}
+
+.sound-button:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}

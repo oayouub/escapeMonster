@@ -7,6 +7,30 @@ const joinBtn = document.getElementById('join-btn')
 const startBtn = document.getElementById('start-btn')
 const playersCountDiv = document.getElementById('players-count')
 
+const backgroundMusic = document.getElementById('backgroundMusic')
+const soundToggle = document.getElementById('soundToggle')
+const soundOnIcon = soundToggle.querySelector('.sound-on')
+const soundOffIcon = soundToggle.querySelector('.sound-off')
+
+backgroundMusic.volume = 0.5;
+soundToggle.addEventListener('click', () => {
+    if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        soundOnIcon.style.display = 'block'
+        soundOffIcon.style.display = 'none'
+    } else {
+        backgroundMusic.pause();
+        soundOnIcon.style.display = 'none'
+        soundOffIcon.style.display = 'block'
+    }
+});
+
+document.addEventListener('click', () => {
+    if (backgroundMusic.paused) {
+        backgroundMusic.play()
+    }
+}, { once: true })
+
 canvas.width = 800
 canvas.height = 600
 
