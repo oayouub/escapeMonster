@@ -222,55 +222,39 @@ function gameLoop() {
   
   if (isInvincible && currentTime >= invincibleEndTime) {
     isInvincible = false
-    if (myPlayer) {
+  }
+
+  if (myPlayer && !myPlayer.eliminated && !isStunned) {
+    let direction = null;
+    
+    if (keys.ArrowLeft) {
+      direction = 'left';
+      myPlayer.x -= 5;
+    }
+    else if (keys.ArrowRight) {
+      direction = 'right';
+      myPlayer.x += 5;
+    }
+    else if (keys.ArrowUp) {
+      direction = 'up';
+      myPlayer.y -= 5;
+    }
+    else if (keys.ArrowDown) {
+      direction = 'down';
+      myPlayer.y += 5;
+    }
+
+    if (direction) {
+      myPlayer.direction = direction;
       socket.emit('move', {
         x: myPlayer.x,
         y: myPlayer.y,
-        direction: myPlayer.direction
-      })
+        direction: direction
+      });
+      animationFrame = (animationFrame + 1) % 4;
+    } else {
+      animationFrame = 0;
     }
-  }
-
-  if (myPlayer && !myPlayer.eliminated) {
-    let newDirection = null
-    let hasMoved = false
-
-    if (!isStunned) {
-      if (keys.ArrowLeft) {
-        myPlayer.x -= 5
-        newDirection = 'left'
-        hasMoved = true
-      }
-      if (keys.ArrowRight) {
-        myPlayer.x += 5
-        newDirection = 'right'
-        hasMoved = true
-      }
-      if (keys.ArrowUp) {
-        myPlayer.y -= 5
-        newDirection = 'up'
-        hasMoved = true
-      }
-      if (keys.ArrowDown) {
-        myPlayer.y += 5
-        newDirection = 'down'
-        hasMoved = true
-      }
-
-      myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x))
-      myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y))
-
-      if (hasMoved || newDirection !== myPlayer.direction) {
-        myPlayer.direction = newDirection
-        socket.emit('move', {
-          x: myPlayer.x,
-          y: myPlayer.y,
-          direction: newDirection
-        })
-      }
-    }
-
-    animationFrame = hasMoved ? (animationFrame + 1) % 4 : 0
   }
 
   render()
