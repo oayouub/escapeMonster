@@ -25,6 +25,15 @@ const directions = ['down', 'left', 'up'];
 const frames = ['0', '1', '2', '3'];
 const playerImages = {};
 
+let STUN_DURATIO
+let INVINCIBLE_DURATION
+
+let stunEndTime = 0
+let invincibleEndTime = 0
+
+let isStunned = false
+let isInvincible = false
+
 directions.forEach((dir) => {
   playerImages[dir] = {};
   frames.forEach((frame) => {
@@ -83,8 +92,13 @@ socket.on('players', (updatedPlayers) => {
     direction: player.direction
   }));
   myPlayer = players.find(p => p.id === socket.id);
+  if (myPlayer) {
+    if (!isStunned && !isInvincible) {
+      isStunned = myPlayer.isStunned || false
+      isInvincible = myPlayer.isInvincible || false
+    }
+  }
 });
-
 
 socket.on('gameState', (state) => {
   gameState = state
@@ -124,13 +138,22 @@ socket.on('gameReset', () => {
 // stun
 socket.on('stunned', () => {
   if (myPlayer) {
-    myPlayer.isStunned = true
+    isStunned = true;
+    stunEndTime = Date.now() + STUN_DURATION
   }
 })
+
 socket.on('unstunned', () => {
   if (myPlayer) {
-    myPlayer.isStunned = false
+    isStunned = false
+    isInvincible = true
+    invincibleEndTime = Date.now() + INVINCIBLE_DURATION
   }
+})
+
+socket.on('gameConstants', (constants) => {
+  STUN_DURATION = constants.STUN_DURATION
+  INVINCIBLE_DURATION = constants.INVINCIBLE_DURATION
 })
 
 document.addEventListener('keydown', (e) => {
@@ -145,46 +168,69 @@ document.addEventListener('keyup', (e) => {
 })
 
 function gameLoop() {
-  if (myPlayer && !myPlayer.isStunned) {
-    let newDirection = null
-
-    if (keys.ArrowLeft) {
-      myPlayer.x -= 5;
-      newDirection = 'left';
+  const currentTime = Date.now()
+  
+  if (isStunned && currentTime >= stunEndTime) {
+    isStunned = false
+    isInvincible = true
+    invincibleEndTime = currentTime + INVINCIBLE_DURATION
+  }
+  
+  if (isInvincible && currentTime >= invincibleEndTime) {
+    isInvincible = false
+    if (myPlayer) {
+      socket.emit('move', {
+        x: myPlayer.x,
+        y: myPlayer.y,
+        direction: myPlayer.direction
+      })
     }
-    if (keys.ArrowRight) {
-      myPlayer.x += 5;
-      newDirection = 'right';
-    }
-    if (keys.ArrowUp) {
-      myPlayer.y -= 5;
-      newDirection = 'up';
-    }
-    if (keys.ArrowDown) {
-      myPlayer.y += 5;
-      newDirection = 'down';
-    }
-
-    if (!keys.ArrowLeft && !keys.ArrowRight && !keys.ArrowUp && !keys.ArrowDown) {
-      newDirection = myPlayer.direction; // Ne change pas la direction
-    }
-
-    myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x));
-    myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y));
-
-    // Seulement envoyer si la direction change
-    if (newDirection !== myPlayer.direction) {
-      myPlayer.direction = newDirection;
-      socket.emit('move', {x: myPlayer.x, y: myPlayer.y, direction: newDirection});
-    } else {
-      console.log('default', myPlayer.direction, newDirection)
-    }
-
-    animationFrame = (animationFrame + 1) % 4;
   }
 
-  render();
-  requestAnimationFrame(gameLoop);
+  if (myPlayer) {
+    let newDirection = null
+    let hasMoved = false
+
+    if (!isStunned) {
+      if (keys.ArrowLeft) {
+        myPlayer.x -= 5
+        newDirection = 'left'
+        hasMoved = true
+      }
+      if (keys.ArrowRight) {
+        myPlayer.x += 5
+        newDirection = 'right'
+        hasMoved = true
+      }
+      if (keys.ArrowUp) {
+        myPlayer.y -= 5
+        newDirection = 'up'
+        hasMoved = true
+      }
+      if (keys.ArrowDown) {
+        myPlayer.y += 5
+        newDirection = 'down'
+        hasMoved = true
+      }
+
+      myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x))
+      myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y))
+
+      if (hasMoved || newDirection !== myPlayer.direction) {
+        myPlayer.direction = newDirection
+        socket.emit('move', {
+          x: myPlayer.x,
+          y: myPlayer.y,
+          direction: newDirection
+        })
+      }
+    }
+
+    animationFrame = (animationFrame + 1) % 4
+  }
+
+  render()
+  requestAnimationFrame(gameLoop)
 }
 
 function render() {
@@ -200,40 +246,43 @@ function render() {
 
   if (gameState) {
     ctx.fillStyle = '#ff4400'
-    ctx.fillRect(0, 0, canvas.width, 100)
+    ctx.fillRect(0, 0, canvas.width, gameState.lavaHeight)
   }
 
   // player
   players.forEach(player => {
     let playerImage = getPlayerImage(player, animationFrame);
-    let playerDirection = player.direction; // On s'assure qu'une direction existe
-
     if (player.isStunned) {
-      playerImage = playerImages.normal;
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'
+      ctx.beginPath()
+      ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
+      ctx.fill()
     } else if (player.isInvincible) {
-      playerImage = Date.now() % 200 < 100 ? playerImages.normal : playerImages.normal;
+      ctx.fillStyle = 'rgba(0, 255, 255, 0.5)'
+      ctx.beginPath()
+      ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
+      ctx.fill()
+    }
+
+    if (player.direction === 'right') {
+      ctx.save()
+      ctx.scale(-1, 1)
+      ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40)
+      ctx.restore()
     } else {
-      if (player.direction === 'right') {
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40);
-        ctx.restore();
-      } else {
-        ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40);
-      }
+      ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40)
     }
 
-    ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40);
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.fillText(player.name, player.x, player.y - 30);
+    ctx.fillStyle = '#fff'
+    ctx.textAlign = 'center'
+    ctx.fillText(player.name, player.x, player.y - 30)
 
     if (player.isStunned) {
-      ctx.fillText('STUN!', player.x, player.y - 45);
+      ctx.fillText('STUN!', player.x, player.y - 45)
     } else if (player.isInvincible) {
-      ctx.fillText('INVINCIBLE!', player.x, player.y - 45);
+      ctx.fillText('INVINCIBLE!', player.x, player.y - 45)
     }
-  });
+  })
 }
 
 gameLoop()

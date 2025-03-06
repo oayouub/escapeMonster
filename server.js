@@ -14,8 +14,13 @@ let gameState = {
   obstacleSpeed: 2 
 }
 
+const STUN_DURATION = 1000
+const INVINCIBLE_DURATION = 1000
+
 io.on('connection', (socket) => {
   console.log('Nouveau joueur connecté')
+
+  socket.emit('gameConstants', { STUN_DURATION, INVINCIBLE_DURATION });
 
   socket.on('join', (playerName) => {
     players.set(socket.id, {
@@ -155,10 +160,11 @@ function stunPlayer(playerId) {
     io.to(playerId).emit('stunned')
     
     setTimeout(() => {
-      const player = players.get(playerId)
-      if (player) {
+      if (players.has(playerId)) {
+        const player = players.get(playerId)
         player.isStunned = false
         player.isInvincible = true
+        
         io.emit('players', Array.from(players.values()))
         io.to(playerId).emit('unstunned')
         
@@ -167,9 +173,9 @@ function stunPlayer(playerId) {
             players.get(playerId).isInvincible = false
             io.emit('players', Array.from(players.values()))
           }
-        }, 1000)
+        }, INVINCIBLE_DURATION)
       }
-    }, 2000)
+    }, STUN_DURATION)
   }
 }
 
