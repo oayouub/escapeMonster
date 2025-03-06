@@ -93,6 +93,7 @@ function getPlayerImage(player, animationFrame) {
 }
 
 let animationFrame = 0
+let lastDirection = null;
 
 // join
 joinBtn.addEventListener('click', () => {
@@ -123,8 +124,9 @@ socket.on('gameStarted', () => {
 socket.on('players', (updatedPlayers) => {
   players = updatedPlayers.map(player => ({
     ...player,
-    direction: player.direction
+    direction: player.direction || 'down'
   }));
+  
   myPlayer = players.find(p => p.id === socket.id);
   if (myPlayer) {
     if (!isStunned && !isInvincible) {
@@ -212,69 +214,56 @@ document.addEventListener('keyup', (e) => {
 })
 
 function gameLoop() {
-  const currentTime = Date.now()
-  
-  if (isStunned && currentTime >= stunEndTime) {
-    isStunned = false
-    isInvincible = true
-    invincibleEndTime = currentTime + INVINCIBLE_DURATION
-  }
-  
-  if (isInvincible && currentTime >= invincibleEndTime) {
-    isInvincible = false
-    if (myPlayer) {
-      socket.emit('move', {
-        x: myPlayer.x,
-        y: myPlayer.y,
-        direction: myPlayer.direction
-      })
+  if (myPlayer && !myPlayer.eliminated && !isStunned) {
+    let direction = null;
+    let hasMoved = false;
+
+    // Déterminer la direction et envoyer au serveur
+    if (keys.ArrowLeft) {
+      direction = 'left';
+      hasMoved = true;
+    }
+    else if (keys.ArrowRight) {
+      direction = 'right';
+      hasMoved = true;
+    }
+    else if (keys.ArrowUp) {
+      direction = 'up';
+      hasMoved = true;
+    }
+    else if (keys.ArrowDown) {
+      direction = 'down';
+      hasMoved = true;
+    }
+
+    if (hasMoved) {
+      socket.emit('move', { direction });
+      myPlayer.direction = direction;
+      
+      // Mise à jour locale de la position
+      switch (direction) {
+        case 'left':
+          myPlayer.x = Math.max(0, myPlayer.x - 5);
+          break;
+        case 'right':
+          myPlayer.x = Math.min(canvas.width, myPlayer.x + 5);
+          break;
+        case 'up':
+          myPlayer.y = Math.max(0, myPlayer.y - 5);
+          break;
+        case 'down':
+          myPlayer.y = Math.min(canvas.height, myPlayer.y + 5);
+          break;
+      }
+      
+      animationFrame = (animationFrame + 1) % 4;
+    } else {
+      animationFrame = 0;
     }
   }
 
-  if (myPlayer && !myPlayer.eliminated) {
-    let newDirection = null
-    let hasMoved = false
-
-    if (!isStunned) {
-      if (keys.ArrowLeft) {
-        myPlayer.x -= 5
-        newDirection = 'left'
-        hasMoved = true
-      }
-      if (keys.ArrowRight) {
-        myPlayer.x += 5
-        newDirection = 'right'
-        hasMoved = true
-      }
-      if (keys.ArrowUp) {
-        myPlayer.y -= 5
-        newDirection = 'up'
-        hasMoved = true
-      }
-      if (keys.ArrowDown) {
-        myPlayer.y += 5
-        newDirection = 'down'
-        hasMoved = true
-      }
-
-      myPlayer.x = Math.max(0, Math.min(canvas.width, myPlayer.x))
-      myPlayer.y = Math.max(0, Math.min(canvas.height, myPlayer.y))
-
-      if (hasMoved || newDirection !== myPlayer.direction) {
-        myPlayer.direction = newDirection
-        socket.emit('move', {
-          x: myPlayer.x,
-          y: myPlayer.y,
-          direction: newDirection
-        })
-      }
-    }
-
-    animationFrame = hasMoved ? (animationFrame + 1) % 4 : 0
-  }
-
-  render()
-  requestAnimationFrame(gameLoop)
+  render();
+  requestAnimationFrame(gameLoop);
 }
 
 function render() {
@@ -338,5 +327,15 @@ function render() {
     }
   })
 }
+
+// Ajouter l'événement pour recevoir les mouvements des autres joueurs
+socket.on('playerMove', (data) => {
+  const player = players.find(p => p.id === data.id);
+  if (player && player !== myPlayer) {
+    player.x = data.x;
+    player.y = data.y;
+    player.direction = data.direction;
+  }
+});
 
 gameLoop()

@@ -44,10 +44,31 @@ io.on('connection', (socket) => {
   })
 
   socket.on('move', (position) => {
-    const player = players.get(socket.id)
+    const player = players.get(socket.id);
     if (player && !player.isStunned && !player.eliminated) {
-      player.x = position.x;
-      player.y = position.y;
+      player.direction = position.direction;
+      
+      switch (position.direction) {
+        case 'left':
+          player.x = Math.max(0, player.x - 5);
+          break;
+        case 'right':
+          player.x = Math.min(800, player.x + 5);
+          break;
+        case 'up':
+          player.y = Math.max(0, player.y - 5);
+          break;
+        case 'down':
+          player.y = Math.min(600, player.y + 5);
+          break;
+      }
+      
+      socket.broadcast.emit('playerMove', {
+        id: socket.id,
+        x: player.x,
+        y: player.y,
+        direction: player.direction
+      });
     }
   })
 
