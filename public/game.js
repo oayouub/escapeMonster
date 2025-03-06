@@ -49,7 +49,7 @@ const keys = {
   ArrowDown: false
 }
 
-const directions = ['down', 'left', 'up'];
+const directions = ['down', 'left', 'up', 'right'];
 const frames = ['0', '1', '2', '3'];
 const playerImages = {};
 
@@ -86,6 +86,8 @@ function getPlayerImage(player, animationFrame) {
   }
 
   let direction = player.direction || 'down';
+  if (direction === 'right') direction = 'left';
+  
   let frame = animationFrame % 2 === 0 ? '0' : (animationFrame % 4 === 1 ? '1' : '2');
   return playerImages[direction]?.[frame] || playerImages['down']['0'];
 }
