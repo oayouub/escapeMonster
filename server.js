@@ -45,7 +45,7 @@ io.on('connection', (socket) => {
 
   socket.on('move', (position) => {
     const player = players.get(socket.id)
-    if (player && !player.isStunned) {
+    if (player && !player.isStunned && !player.eliminated) {
       player.x = position.x;
       player.y = position.y;
     }
@@ -123,9 +123,10 @@ function checkLavaCollisions() {
 
 function eliminatePlayer(playerId) {
   const player = players.get(playerId);
-  if (player) {
+  if (player && !player.eliminated) {
     player.eliminated = true;
-    io.to(playerId).emit('eliminated')
+    io.to(playerId).emit('eliminated');
+    io.emit('players', Array.from(players.values()));
   }
 }
 

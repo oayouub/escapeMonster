@@ -156,8 +156,11 @@ function resetInterface() {
 }
 
 socket.on('eliminated', () => {
-  // Ne rien faire, le joueur continue de regarder la partie
-})
+  if (myPlayer) {
+    myPlayer.eliminated = true;
+    isStunned = true;
+  }
+});
 
 socket.on('gameOver', (winner) => {
   winModal.style.display = 'flex';
@@ -228,7 +231,7 @@ function gameLoop() {
     }
   }
 
-  if (myPlayer) {
+  if (myPlayer && !myPlayer.eliminated) {
     let newDirection = null
     let hasMoved = false
 
@@ -267,7 +270,7 @@ function gameLoop() {
       }
     }
 
-    animationFrame = (animationFrame + 1) % 4
+    animationFrame = hasMoved ? (animationFrame + 1) % 4 : 0
   }
 
   render()
@@ -300,36 +303,38 @@ function render() {
 
   // player
   players.forEach(player => {
-    let playerImage = getPlayerImage(player, animationFrame)
-    if (player.isStunned) {
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'
-      ctx.beginPath()
-      ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
-      ctx.fill()
-    } else if (player.isInvincible) {
-      ctx.fillStyle = 'rgba(0, 255, 255, 0.5)'
-      ctx.beginPath()
-      ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
-      ctx.fill()
-    }
+    if (!player.eliminated) {
+      let playerImage = getPlayerImage(player, animationFrame)
+      if (player.isStunned) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'
+        ctx.beginPath()
+        ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
+        ctx.fill()
+      } else if (player.isInvincible) {
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.5)'
+        ctx.beginPath()
+        ctx.arc(player.x, player.y, 25, 0, Math.PI * 2)
+        ctx.fill()
+      }
 
-    if (player.direction === 'right') {
-      ctx.save()
-      ctx.scale(-1, 1)
-      ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40)
-      ctx.restore()
-    } else {
-      ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40)
-    }
+      if (player.direction === 'right') {
+        ctx.save()
+        ctx.scale(-1, 1)
+        ctx.drawImage(playerImage, -player.x - 20, player.y - 20, 40, 40)
+        ctx.restore()
+      } else {
+        ctx.drawImage(playerImage, player.x - 20, player.y - 20, 40, 40)
+      }
 
-    ctx.fillStyle = '#fff'
-    ctx.textAlign = 'center'
-    ctx.fillText(player.name, player.x, player.y - 30)
+      ctx.fillStyle = '#fff'
+      ctx.textAlign = 'center'
+      ctx.fillText(player.name, player.x, player.y - 30)
 
-    if (player.isStunned) {
-      ctx.fillText('STUN!', player.x, player.y - 45)
-    } else if (player.isInvincible) {
-      ctx.fillText('INVINCIBLE!', player.x, player.y - 45)
+      if (player.isStunned) {
+        ctx.fillText('STUN!', player.x, player.y - 45)
+      } else if (player.isInvincible) {
+        ctx.fillText('INVINCIBLE!', player.x, player.y - 45)
+      }
     }
   })
 }
