@@ -34,6 +34,9 @@ let invincibleEndTime = 0
 let isStunned = false
 let isInvincible = false
 
+const rockImage = new Image()
+rockImage.src = 'assets/rockEscape.png'
+
 directions.forEach((dir) => {
   playerImages[dir] = {};
   frames.forEach((frame) => {
@@ -234,24 +237,32 @@ function gameLoop() {
 }
 
 function render() {
-  ctx.fillStyle = '#1a1a1a'
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  
+  ctx.fillStyle = '#2E7D32'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
+  
+  if (gameState) {
+    const lavaGradient = ctx.createLinearGradient(0, 0, 0, gameState.lavaHeight)
+    lavaGradient.addColorStop(0, '#FF4500')    
+    lavaGradient.addColorStop(0.3, '#FF6B00')  
+    lavaGradient.addColorStop(0.6, '#FF2400')  
+    lavaGradient.addColorStop(1, '#8B0000')    
 
-  if (gameState && gameState.obstacles) {
-    ctx.fillStyle = '#666'
-    for (const obstacle of gameState.obstacles) {
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height)
-    }
+    ctx.fillStyle = lavaGradient
+    ctx.fillRect(0, 0, canvas.width, gameState.lavaHeight)
   }
 
-  if (gameState) {
-    ctx.fillStyle = '#ff4400'
-    ctx.fillRect(0, 0, canvas.width, gameState.lavaHeight)
+  // Obstacles
+  if (gameState && gameState.obstacles) {
+    for (const obstacle of gameState.obstacles) {
+      ctx.drawImage(rockImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height)
+    }
   }
 
   // player
   players.forEach(player => {
-    let playerImage = getPlayerImage(player, animationFrame);
+    let playerImage = getPlayerImage(player, animationFrame)
     if (player.isStunned) {
       ctx.fillStyle = 'rgba(255, 0, 0, 0.7)'
       ctx.beginPath()
