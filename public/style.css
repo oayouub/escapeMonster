@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'MaPolice2';
+    src: url('fonts/digitalix.ttf') format('truetype');
+}
+
 body {
     margin: 0;
     display: flex;
@@ -11,6 +16,7 @@ body {
     background-image: url('assets/fondlave.webp');
     background-position: bottom;
     position: relative;
+    font-family: 'MaPolice2', Arial, sans-serif;
 }
 
 #login-screen {
@@ -18,12 +24,16 @@ body {
     padding: 20px;
     background-color: #1a1a1a;
     border-radius: 10px;
+    font-family: 'MaPolice2', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
 }
 
 input, button {
     margin: 10px;
     padding: 10px;
     font-size: 16px;
+    font-family: 'MaPolice2', Arial, sans-serif;
 }
 
 #gameCanvas {

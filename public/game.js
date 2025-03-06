@@ -104,7 +104,7 @@ startBtn.addEventListener('click', () => {
 })
 
 socket.on('playersCount', (count) => {
-  playersCountDiv.textContent = `Joueurs connectés: ${count}/4`
+  playersCountDiv.textContent = `CONNECTED PLAYERS: ${count}/4`
   startBtn.disabled = count < 2
 })
 
